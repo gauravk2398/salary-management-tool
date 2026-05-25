@@ -1,0 +1,20 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DATABASE_HOST") { "db" } %>
+  username: <%= ENV.fetch("DATABASE_USER") { "postgres" } %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD") { "password" } %>
+  port: 5432
+
+development:
+  <<: *default
+  database: salary_management_development
+
+test:
+  <<: *default
+  database: salary_management_test
+
+production:
+  <<: *default
+  database: salary_management_production

@@ -1,0 +1,18 @@
+# OS files
+.DS_Store
+
+# Logs
+*.log
+/salary-api/log/*
+
+# Temp directories
+/salary-api/tmp/*
+/salary-web/dist
+/salary-web/tmp
+
+# Node modules
+node_modules/
+/salary-web/node_modules/
+
+# Postgres volume
+pgdata/
