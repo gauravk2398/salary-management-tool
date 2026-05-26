@@ -1,121 +1,274 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { 
+  CheckCircle2, 
+  AlertCircle
+} from 'lucide-react'
+import type { Employee } from './types'
+import { DashboardHeader } from './components/DashboardHeader'
+import { DirectoryView } from './components/DirectoryView'
+import { InsightsView } from './components/InsightsView'
+import { EmployeeModal } from './components/EmployeeModal'
+import { useEmployees } from './hooks/useEmployees'
+import { useInsights } from './hooks/useInsights'
+
+const API_BASE_URL = 'http://localhost:3000/api/v1'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [activeTab, setActiveTab] = useState<'directory' | 'insights'>('directory')
+  
+  // Notification State
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 4000)
+  }
+
+  // Hook-managed states
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState<string>('')
+
+  const {
+    employees,
+    pagination,
+    isLoading,
+    fetchEmployees
+  } = useEmployees(currentPage, submittedSearchQuery, showNotification)
+
+  const {
+    countryStats,
+    jobStats,
+    deptStats,
+    empTypeStats,
+    selectedCountryForJob,
+    setSelectedCountryForJob,
+    insightsLoading,
+    fetchInsights
+  } = useInsights(showNotification)
+
+  // Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+  
+  // Form States
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    job_title: '',
+    country: '',
+    salary: '',
+    department: 'Engineering',
+    employment_type: 'Full-time'
+  })
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({})
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+  const handleTabChange = (tab: 'directory' | 'insights') => {
+    setActiveTab(tab)
+    if (tab === 'insights') {
+      fetchInsights()
+    }
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentPage(1)
+    setSubmittedSearchQuery(searchQuery)
+  }
+
+  const handleOpenAddModal = () => {
+    setFormData({
+      full_name: '',
+      email: '',
+      job_title: '',
+      country: '',
+      salary: '',
+      department: 'Engineering',
+      employment_type: 'Full-time'
+    })
+    setFormErrors({})
+    setIsAddModalOpen(true)
+  }
+
+  const handleOpenEditModal = (employee: Employee) => {
+    setSelectedEmployee(employee)
+    setFormData({
+      full_name: employee.full_name,
+      email: employee.email,
+      job_title: employee.job_title,
+      country: employee.country,
+      salary: employee.salary.toString(),
+      department: employee.department,
+      employment_type: employee.employment_type
+    })
+    setFormErrors({})
+    setIsEditModalOpen(true)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleCreateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setFormErrors({})
+    try {
+      const res = await fetch(`${API_BASE_URL}/employees`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee: formData })
+      })
+      const data = await res.json()
+      if (res.status === 201) {
+        setIsAddModalOpen(false)
+        fetchEmployees(currentPage, submittedSearchQuery)
+        showNotification('Employee successfully added to organization!', 'success')
+      } else {
+        setFormErrors(data.errors || { general: ['Submission failed'] })
+      }
+    } catch (err) {
+      console.error(err)
+      showNotification('Error creating employee record', 'error')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUpdateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedEmployee) return
+    setIsSubmitting(true)
+    setFormErrors({})
+    try {
+      const res = await fetch(`${API_BASE_URL}/employees/${selectedEmployee.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee: formData })
+      })
+      const data = await res.json()
+      if (res.status === 200) {
+        setIsEditModalOpen(false)
+        fetchEmployees(currentPage, submittedSearchQuery)
+        showNotification('Employee record updated successfully', 'success')
+      } else {
+        setFormErrors(data.errors || { general: ['Submission failed'] })
+      }
+    } catch (err) {
+      console.error(err)
+      showNotification('Error updating employee record', 'error')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteEmployee = async (id: number) => {
+    if (!confirm('Are you absolutely sure you want to delete this employee? This action is irreversible.')) return
+    try {
+      const res = await fetch(`${API_BASE_URL}/employees/${id}`, {
+        method: 'DELETE'
+      })
+      if (res.status === 204) {
+        fetchEmployees(currentPage, submittedSearchQuery)
+        showNotification('Employee record successfully deleted', 'success')
+      } else {
+        showNotification('Could not delete record', 'error')
+      }
+    } catch (err) {
+      console.error(err)
+      showNotification('Error deleting record from server', 'error')
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col font-sans select-none antialiased">
+      
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border bg-white transition-all duration-300 transform translate-y-0 ${
+          notification.type === 'success' 
+            ? 'border-gray-200 text-gray-900' 
+            : 'border-rose-200 text-rose-600 bg-rose-50/10'
+        }`}>
+          {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4 text-rose-500" />}
+          <span className="text-xs font-semibold">{notification.message}</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      )}
 
-      <div className="ticks"></div>
+      {/* Main Container */}
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6 flex-grow">
+        
+        {/* Glowing Gradient Header */}
+        <DashboardHeader activeTab={activeTab} setActiveTab={handleTabChange} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Directory View */}
+        {activeTab === 'directory' && (
+          <DirectoryView
+            employees={employees}
+            pagination={pagination}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            isLoading={isLoading}
+            onSearch={handleSearchSubmit}
+            onAddTrigger={handleOpenAddModal}
+            onEditTrigger={handleOpenEditModal}
+            onDeleteTrigger={handleDeleteEmployee}
+          />
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* Insights View */}
+        {activeTab === 'insights' && (
+          <InsightsView
+            countryStats={countryStats}
+            jobStats={jobStats}
+            deptStats={deptStats}
+            empTypeStats={empTypeStats}
+            selectedCountryForJob={selectedCountryForJob}
+            setSelectedCountryForJob={setSelectedCountryForJob}
+            insightsLoading={insightsLoading}
+          />
+        )}
+
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 py-6 mt-12 bg-white">
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+          Salary Management Portal. All rights reserved.
+        </div>
+      </footer>
+
+      {/* Add Employee Modal */}
+      <EmployeeModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleCreateEmployee}
+        formData={formData}
+        onChange={handleInputChange}
+        formErrors={formErrors}
+        isSubmitting={isSubmitting}
+        mode="add"
+      />
+
+      {/* Edit Employee Modal */}
+      <EmployeeModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleUpdateEmployee}
+        formData={formData}
+        onChange={handleInputChange}
+        formErrors={formErrors}
+        isSubmitting={isSubmitting}
+        mode="edit"
+      />
+
+    </div>
   )
 }
 
