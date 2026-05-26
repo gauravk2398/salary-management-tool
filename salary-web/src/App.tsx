@@ -3,7 +3,7 @@ import {
   CheckCircle2, 
   AlertCircle
 } from 'lucide-react'
-import type { Employee } from './types'
+import type { Employee } from './types/index'
 import { DashboardHeader } from './components/DashboardHeader'
 import { DirectoryView } from './components/DirectoryView'
 import { InsightsView } from './components/InsightsView'
@@ -185,17 +185,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col font-sans select-none antialiased">
+    <div className="min-h-screen bg-[#fafafa] text-gray-900 flex flex-col font-sans select-none antialiased">
       
       {/* Toast Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border bg-white transition-all duration-300 transform translate-y-0 ${
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-lg shadow-sm border bg-white transition-all duration-200 ${
           notification.type === 'success' 
             ? 'border-gray-200 text-gray-900' 
-            : 'border-rose-200 text-rose-600 bg-rose-50/10'
+            : 'border-rose-200 text-rose-600 bg-rose-50/30'
         }`}>
-          {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4 text-rose-500" />}
-          <span className="text-xs font-semibold">{notification.message}</span>
+          {notification.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <AlertCircle className="w-3.5 h-3.5 text-rose-500" />}
+          <span className="text-xs font-medium">{notification.message}</span>
         </div>
       )}
 

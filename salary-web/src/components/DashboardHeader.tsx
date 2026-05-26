@@ -10,31 +10,31 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   setActiveTab
 }) => {
   return (
-    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 pb-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Salary Management</h1>
-        <p className="text-xs text-gray-500">
-          Internal administration and salary analysis dashboard.
+    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200/80 pb-4">
+      <div className="flex flex-col">
+        <h1 className="text-base font-semibold tracking-tight text-gray-950">Salary Management</h1>
+        <p className="text-[11px] text-gray-400">
+          Internal organization directory and analytics.
         </p>
       </div>
 
-      <div className="flex gap-1.5 p-1 bg-gray-100 rounded-xl w-full sm:w-auto">
+      <div className="flex gap-4 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
         <button
           onClick={() => setActiveTab('directory')}
-          className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-1.5 rounded-lg transition-all cursor-pointer ${
+          className={`text-xs font-medium pb-4 sm:-mb-4 transition-all cursor-pointer ${
             activeTab === 'directory' 
-              ? 'bg-white text-gray-900 shadow-sm' 
-              : 'text-gray-500 hover:text-gray-900'
+              ? 'text-gray-950 border-b-2 border-gray-950 font-semibold' 
+              : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           Directory
         </button>
         <button
           onClick={() => setActiveTab('insights')}
-          className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-1.5 rounded-lg transition-all cursor-pointer ${
+          className={`text-xs font-medium pb-4 sm:-mb-4 transition-all cursor-pointer ${
             activeTab === 'insights' 
-              ? 'bg-white text-gray-900 shadow-sm' 
-              : 'text-gray-500 hover:text-gray-900'
+              ? 'text-gray-950 border-b-2 border-gray-950 font-semibold' 
+              : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           Insights

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { CountryStat, JobStat, DeptStat, EmpTypeStat } from '../types'
+import type { CountryStat, JobStat, DeptStat, EmpTypeStat } from '../types/index'
 
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
