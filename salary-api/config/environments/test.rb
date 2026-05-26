@@ -62,6 +62,8 @@ Rails.application.configure do
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
 
+  # Allow RSpec mock requests
+  config.hosts << "www.example.com"
   # Allow any host in test mode
   config.hosts << /.*/
 end
